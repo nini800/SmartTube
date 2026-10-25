@@ -134,4 +134,15 @@
     <dimen name="tooltip_vertical_padding_mod">6.5dp</dimen>
     <dimen name="tooltip_y_offset_non_touch_mod">0dp</dimen>
     <dimen name="tooltip_y_offset_touch_mod">16dp</dimen>
+
+    <!-- Tabbed grid (row sections shown as tabs + 2D grid) -->
+    <dimen name="tabs_row_margin_top">82dp</dimen>
+    <dimen name="tabs_row_height">40dp</dimen>
+    <dimen name="tabs_grid_padding_top">12dp</dimen>
+    <dimen name="tab_item_spacing">10dp</dimen>
+    <dimen name="tab_item_padding_horizontal">14dp</dimen>
+    <dimen name="tab_item_padding_vertical">6dp</dimen>
+    <dimen name="tab_item_max_width">260dp</dimen>
+    <dimen name="tab_item_text_size">15sp</dimen>
+    <dimen name="tab_item_corner_radius">8dp</dimen>
 </resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- No update manifest: the fork must never offer the official builds as updates -->
+    <string-array name="update_urls" />
+</resources>

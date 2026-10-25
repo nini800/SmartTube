@@ -167,6 +167,12 @@ android {
             applicationId "org.smarttube.stable"
             targetSdkVersion project.properties.compileSdkVersion
         }
+        // Household fork: installs side by side with the official SmartTube (own package, no update checker, no Firebase)
+        stpinou {
+            applicationId "home.pinou.smarttube"
+            targetSdkVersion project.properties.compileSdkVersion
+            matchingFallbacks = ['ststable']
+        }
         stfdroid {
             applicationId "app.smarttube.fdroid"
             minSdkVersion 21

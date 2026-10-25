@@ -164,7 +164,14 @@ public class GridFragment extends Fragment implements BrowseSupportFragment.Main
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_grid, container, false);
+        return inflater.inflate(getLayoutResId(), container, false);
+    }
+
+    /**
+     * Subclasses may use their own layout. It must contain R.id.browse_grid_dock.
+     */
+    protected int getLayoutResId() {
+        return R.layout.fragment_grid;
     }
 
     @Override
@@ -212,6 +219,16 @@ public class GridFragment extends Fragment implements BrowseSupportFragment.Main
 
     public int getSelectedPosition() {
         return mSelectedPosition;
+    }
+
+    /**
+     * Swaps the adapter and the selected position at once.<br/>
+     * Setting them one by one could apply the old position to the new adapter.
+     */
+    protected void setAdapter(ObjectAdapter adapter, int position) {
+        mAdapter = adapter;
+        mSelectedPosition = position;
+        updateAdapter();
     }
 
     private void updateAdapter() {

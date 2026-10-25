@@ -19,7 +19,7 @@ import com.liskovsoft.smartyoutubetv2.tv.ui.browse.settings.SettingsGridFragment
 import com.liskovsoft.smartyoutubetv2.tv.ui.browse.video.MultiVideoGridFragment;
 import com.liskovsoft.smartyoutubetv2.tv.ui.browse.video.ShortsGridFragment;
 import com.liskovsoft.smartyoutubetv2.tv.ui.browse.video.VideoGridFragment;
-import com.liskovsoft.smartyoutubetv2.tv.ui.browse.video.VideoRowsFragment;
+import com.liskovsoft.smartyoutubetv2.tv.ui.browse.video.TabbedVideoGridFragment;
 
 public class BrowseSectionFragmentFactory extends BrowseSupportFragment.FragmentFactory<Fragment> {
     private static final String TAG = BrowseSectionFragmentFactory.class.getSimpleName();
@@ -62,7 +62,8 @@ public class BrowseSectionFragmentFactory extends BrowseSupportFragment.Fragment
 
         switch (mFragmentType) {
             case BrowseSection.TYPE_ROW:
-                fragment = new VideoRowsFragment();
+                // Fork: rows are shown as tabs on top + an endless 2D grid
+                fragment = new TabbedVideoGridFragment();
                 break;
             case BrowseSection.TYPE_GRID:
                 fragment = new VideoGridFragment();
