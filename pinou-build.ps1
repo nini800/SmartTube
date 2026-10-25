@@ -23,7 +23,7 @@ if (-not $apk) { throw 'armeabi-v7a APK not found' }
 $dist = Join-Path $root 'dist'
 New-Item -ItemType Directory -Force $dist | Out-Null
 Get-ChildItem $dist -Filter '*.apk' | Remove-Item -Force   # one slot: the latest build only
-$out = Join-Path $dist 'SmartTube-Pinou.apk'
+$out = Join-Path $dist 'PinouTube.apk'
 Copy-Item $apk.FullName $out
 Write-Host "APK: $out"
 
