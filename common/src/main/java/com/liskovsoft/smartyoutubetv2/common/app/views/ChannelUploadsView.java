@@ -6,4 +6,5 @@ public interface ChannelUploadsView {
     void update(VideoGroup videoGroup);
     void showProgressBar(boolean show);
     void clear();
+    void updateSortHeader();
 }

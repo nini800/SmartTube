@@ -26,6 +26,7 @@ import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager.OnComplete;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager.OnError;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager.OnMediaGroup;
+import com.liskovsoft.smartyoutubetv2.common.misc.PlaylistSorter;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -42,6 +43,7 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
     private Video mChannel;
     private MediaGroup mPendingGroup;
     private VideoGroup mBaseGroup;
+    private boolean mAllLoaded; // sorted playlist: every page is already shown
 
     public ChannelUploadsPresenter(Context context) {
         super(context);
@@ -81,6 +83,7 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
         mChannel = null;
         mPendingGroup = null;
         mBaseGroup = null;
+        mAllLoaded = false;
     }
 
     @Override
@@ -120,6 +123,10 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
 
         Log.d(TAG, "onScrollEnd: Group title: " + group.getTitle());
 
+        if (mAllLoaded) {
+            return;
+        }
+
         boolean scrollInProgress = mScrollAction != null && !mScrollAction.isDisposed();
 
         if (!scrollInProgress) {
@@ -145,6 +152,7 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
         getViewManager().startView(ChannelUploadsView.class);
 
         if (getView() != null) {
+            getView().updateSortHeader();
             update(item);
         }
     }
@@ -233,6 +241,13 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
     }
 
     private void update(Video item) {
+        mAllLoaded = false;
+
+        if (isSortable() && !getSort().isDefault()) {
+            updateSorted(item);
+            return;
+        }
+
         // Liked music fix - not all videos displayed. The behavior with other playlists is buggy.
         if (Helpers.equals(item.playlistId, Video.PLAYLIST_LIKED_MUSIC)) {
             update(item.getGroup());
@@ -340,12 +355,101 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
         mChannel = null;
         mPendingGroup = null;
         mBaseGroup = null;
+        mAllLoaded = false;
+    }
+
+    /**
+     * The opened item is a playlist (not a channel): its sort can be changed.
+     */
+    public boolean isSortable() {
+        return mPendingGroup == null && getSortKey() != null;
+    }
+
+    public PlaylistSorter.Sort getSort() {
+        String key = getSortKey();
+        return key != null ? PlaylistSorter.getSort(getContext(), key) : new PlaylistSorter.Sort(PlaylistSorter.SORT_PLAYLIST_ORDER, false);
+    }
+
+    public void setSort(PlaylistSorter.Sort sort) {
+        String key = getSortKey();
+
+        if (key == null || getView() == null) {
+            return;
+        }
+
+        PlaylistSorter.setSort(getContext(), key, sort);
+        getView().updateSortHeader();
+
+        // Reload from YouTube: the playlist could have changed since it was opened
+        disposeActions();
+        getView().clear();
+        mBaseGroup = null;
+        update(mChannel);
+    }
+
+    private String getSortKey() {
+        if (mChannel == null || mChannel.isChannel()) {
+            return null;
+        }
+
+        if (!TextUtils.isEmpty(mChannel.playlistId)) {
+            return mChannel.playlistId;
+        }
+
+        boolean isPlaylist = mChannel.mediaItem != null && mChannel.mediaItem.getType() == MediaItem.TYPE_PLAYLIST;
+
+        return isPlaylist && !TextUtils.isEmpty(mChannel.getTitle()) ? "title:" + mChannel.getTitle() : null;
+    }
+
+    /**
+     * YouTube can't sort playlists on TV: load every page, then show them sorted.
+     */
+    private void updateSorted(Video item) {
+        Observable<MediaGroup> firstPage = obtainUploadsObservable(item);
+
+        if (firstPage == null || getView() == null) {
+            return;
+        }
+
+        PlaylistSorter.Sort sort = getSort();
+        String title = item.getTitle();
+
+        disposeActions();
+        getView().showProgressBar(true);
+
+        mUpdateAction = firstPage
+                .flatMap(group -> RxHelper.fromCallable(() -> PlaylistSorter.loadAllSorted(getContentService(), group, title, sort)))
+                .subscribe(
+                        sorted -> {
+                            if (getView() == null) {
+                                return;
+                            }
+                            mAllLoaded = true;
+                            mBaseGroup = sorted;
+                            getView().clear();
+                            update(sorted);
+                            getView().showProgressBar(false);
+                        },
+                        error -> {
+                            Log.e(TAG, "updateSorted error: %s", error.getMessage());
+                            if (getView() != null) {
+                                getView().showProgressBar(false);
+                            }
+                        },
+                        () -> {
+                            if (getView() != null) {
+                                getView().showProgressBar(false);
+                            }
+                        }
+                );
     }
 
     public void refresh() {
         if (getView() == null) {
             return;
         }
+
+        getView().updateSortHeader();
 
         if (mPendingGroup != null) {
             getView().clear();

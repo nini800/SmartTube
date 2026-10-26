@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Playlist screen: a header (title, sort type, sort direction) above the usual grid -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:id="@+id/browse_dummy"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent" >
+
+    <androidx.leanback.widget.BrowseFrameLayout
+            android:id="@+id/grid_frame"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:descendantFocusability="afterDescendants"
+            android:clipChildren="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+        <!-- Taller than the screen by the header: hiding the header slides it up, so the grid gets that space -->
+        <LinearLayout
+                android:id="@+id/playlist_content"
+                android:orientation="vertical"
+                android:clipChildren="true"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
+
+            <LinearLayout
+                    android:id="@+id/playlist_header"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/playlist_header_margin_top"
+                    android:paddingStart="?attr/browsePaddingStart"
+                    android:paddingEnd="?attr/browsePaddingStart" >
+
+                <TextView
+                        android:id="@+id/playlist_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textSize="@dimen/playlist_header_title_size"
+                        android:textColor="#FFFFFFFF" />
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/tab_item_spacing"
+                        android:layout_marginEnd="@dimen/tab_item_spacing"
+                        android:text="@string/playlist_sort_by"
+                        android:textSize="@dimen/tab_item_text_size"
+                        android:textColor="#B3FFFFFF" />
+
+                <TextView
+                        android:id="@+id/playlist_sort_type"
+                        style="@style/PlaylistHeaderButton" />
+
+                <TextView
+                        android:id="@+id/playlist_sort_order"
+                        style="@style/PlaylistHeaderButton"
+                        android:layout_marginStart="@dimen/tab_item_spacing"
+                        android:minWidth="@dimen/tabs_row_height"
+                        android:gravity="center" />
+
+            </LinearLayout>
+
+            <FrameLayout
+                    android:id="@+id/browse_grid_dock"
+                    android:clipChildren="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+        </LinearLayout>
+
+    </androidx.leanback.widget.BrowseFrameLayout>
+</FrameLayout>

@@ -248,4 +248,19 @@
         <item name="cardSelectedBackground">@color/card_selected_background_white_grey</item>
     </style>
     <!--  End Color scheme: Dark Blue (OLED)  -->
+    <!-- Playlist header buttons, same look as the tabs -->
+    <style name="PlaylistHeaderButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingStart">@dimen/tab_item_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/tab_item_padding_horizontal</item>
+        <item name="android:paddingTop">@dimen/tab_item_padding_vertical</item>
+        <item name="android:paddingBottom">@dimen/tab_item_padding_vertical</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textSize">@dimen/tab_item_text_size</item>
+        <item name="android:textColor">@color/tab_item_text</item>
+        <item name="android:background">@drawable/tab_item_background</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+    </style>
 </resources>

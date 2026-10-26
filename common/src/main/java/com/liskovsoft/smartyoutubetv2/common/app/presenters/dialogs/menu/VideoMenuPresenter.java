@@ -382,6 +382,12 @@ public class VideoMenuPresenter extends BaseMenuPresenter {
                                             )
                                     );
                                 }
+                                // YouTube already got the "not interested" when the reasons were requested. Just skip the reason.
+                                mDialogPresenter.appendSingleButton(
+                                        UiOptionItem.from(getContext().getString(R.string.not_interested_no_reason),
+                                                option -> removeSuggestedItemAndClose()
+                                        )
+                                );
                                 mDialogPresenter.showDialog(reasons.getTitle());
                             } else {
                                 removeSuggestedItemAndClose();

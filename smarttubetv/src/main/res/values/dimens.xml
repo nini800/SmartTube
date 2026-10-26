@@ -145,4 +145,8 @@
     <dimen name="tab_item_max_width">260dp</dimen>
     <dimen name="tab_item_text_size">15sp</dimen>
     <dimen name="tab_item_corner_radius">8dp</dimen>
+
+    <!-- Playlist header (title + sort) -->
+    <dimen name="playlist_header_margin_top">24dp</dimen>
+    <dimen name="playlist_header_title_size">22sp</dimen>
 </resources>

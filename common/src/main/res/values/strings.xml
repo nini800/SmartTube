@@ -107,6 +107,16 @@
     <string name="open_channel">Open channel</string>
     <string name="open_playlist">Open playlist</string>
     <string name="not_interested">Not interested</string>
+    <string name="not_interested_no_reason">No reason</string>
+    <string name="playlist_sort_by">Sort by</string>
+    <string name="playlist_sort_playlist_order">Playlist order</string>
+    <string name="playlist_sort_upload_date">Upload date</string>
+    <string name="playlist_sort_title">Title</string>
+    <string name="playlist_sort_channel">Channel</string>
+    <string name="playlist_sort_duration">Duration</string>
+    <string name="playlist_sort_views">Views</string>
+    <string name="playlist_sort_ascending">Ascending</string>
+    <string name="playlist_sort_descending">Descending</string>
     <string name="not_recommend_channel">Don\'t recommend channel</string>
     <string name="you_wont_see_this_video">Video has been removed from recommended</string>
     <string name="you_wont_see_this_channel">You won\'t see this channel in recommendations</string>
