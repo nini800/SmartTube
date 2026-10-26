@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,6 +58,7 @@ public class TabbedVideoGridFragment extends GridFragment implements VideoSectio
     private static final String TAG = TabbedVideoGridFragment.class.getSimpleName();
     private static final int NO_TAB = -1;
     private static final long TAB_SWITCH_DELAY_MS = 150;
+    private static final long TABS_ANIMATION_MS = 200;
     /**
      * Keep loading until the tab has at least this many rows of cards.
      */
@@ -69,6 +71,9 @@ public class TabbedVideoGridFragment extends GridFragment implements VideoSectio
     private final Map<VideoGroupObjectAdapter, Integer> mContinueRequestedSizes = new IdentityHashMap<>();
     private ArrayObjectAdapter mTabsAdapter;
     private HorizontalGridView mTabsView;
+    private View mTabsContent;
+    private int mTabsCollapseDistance;
+    private boolean mTabsHidden;
     private UriBackgroundManager mBackgroundManager;
     private VideoGroupPresenter mMainPresenter;
     private VideoCardPresenter mCardPresenter;
@@ -81,6 +86,7 @@ public class TabbedVideoGridFragment extends GridFragment implements VideoSectio
     private int mFocusedTabIndex = -1;
     private boolean mLastFocusInTabs;
     private final Runnable mSwitchToFocusedTab = this::switchToFocusedTab;
+    private final ViewTreeObserver.OnGlobalFocusChangeListener mFocusChangeListener = (oldFocus, newFocus) -> updateTabsVisibility();
 
     private static final class Tab {
         final int id;
@@ -145,13 +151,62 @@ public class TabbedVideoGridFragment extends GridFragment implements VideoSectio
         syncTabsSelection();
 
         setupFocus((BrowseFrameLayout) view.findViewById(R.id.grid_frame));
+        setupTabsHiding(view);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         Utils.removeCallbacks(mSwitchToFocusedTab);
+        if (getView() != null) {
+            getView().getViewTreeObserver().removeOnGlobalFocusChangeListener(mFocusChangeListener);
+        }
         mTabsView = null;
+        mTabsContent = null;
+        mTabsHidden = false;
+    }
+
+    /**
+     * The tabs slide away while scrolling down the grid, like the title bar.<br/>
+     * They come back on the first grid row, or when the focus leaves the grid (tabs, sidebar).
+     */
+    private void setupTabsHiding(View root) {
+        mTabsContent = root.findViewById(R.id.tabs_content);
+        mTabsCollapseDistance = getResources().getDimensionPixelSize(R.dimen.tabs_row_margin_top)
+                + getResources().getDimensionPixelSize(R.dimen.tabs_row_height);
+
+        // Make the content taller than the screen by the tabs area, so the grid fills the screen once the tabs slide up
+        root.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            int height = bottom - top + mTabsCollapseDistance;
+            ViewGroup.LayoutParams params = mTabsContent != null ? mTabsContent.getLayoutParams() : null;
+
+            if (params != null && params.height != height) {
+                params.height = height;
+                v.post(() -> {
+                    if (mTabsContent != null) {
+                        mTabsContent.setLayoutParams(params);
+                    }
+                });
+            }
+        });
+
+        root.getViewTreeObserver().addOnGlobalFocusChangeListener(mFocusChangeListener);
+    }
+
+    private void updateTabsVisibility() {
+        VerticalGridView grid = getBrowseGrid();
+
+        setTabsHidden(grid != null && grid.hasFocus() && grid.getSelectedPosition() >= getCurrentColsNum());
+    }
+
+    private void setTabsHidden(boolean hidden) {
+        if (mTabsContent == null || mTabsView == null || hidden == mTabsHidden) {
+            return;
+        }
+
+        mTabsHidden = hidden;
+        mTabsContent.animate().translationY(hidden ? -mTabsCollapseDistance : 0).setDuration(TABS_ANIMATION_MS).start();
+        mTabsView.animate().alpha(hidden ? 0 : 1).setDuration(TABS_ANIMATION_MS).start();
     }
 
     protected VideoGroupPresenter getMainPresenter() {
@@ -645,6 +700,8 @@ public class TabbedVideoGridFragment extends GridFragment implements VideoSectio
 
                 checkScrollEnd((Video) item);
             }
+
+            updateTabsVisibility();
         }
 
         private void checkScrollEnd(Video item) {

@@ -15,7 +15,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" >
 
+        <!-- Taller than the screen by the tabs area: hiding the tabs slides it up, so the grid gets that space -->
         <LinearLayout
+                android:id="@+id/tabs_content"
                 android:orientation="vertical"
                 android:clipChildren="true"
                 android:layout_width="match_parent"
