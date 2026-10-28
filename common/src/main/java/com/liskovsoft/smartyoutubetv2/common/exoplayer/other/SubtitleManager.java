@@ -11,6 +11,7 @@ import android.view.accessibility.CaptioningManager.CaptionStyle;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
+import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.text.CaptionStyleCompat;
 import com.google.android.exoplayer2.text.Cue;
 import com.google.android.exoplayer2.text.TextOutput;
@@ -24,7 +25,7 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SubtitleManager implements TextOutput, OnDataChange {
+public class SubtitleManager implements TextOutput, OnDataChange, Player.EventListener {
     private static final String TAG = SubtitleManager.class.getSimpleName();
     private final SubtitleView mSubtitleView;
     private final Context mContext;
@@ -73,6 +74,17 @@ public class SubtitleManager implements TextOutput, OnDataChange {
     public void onCues(List<Cue> cues) {
         if (mSubtitleView != null) {
             mSubtitleView.setCues(forceCenterAlignment(cues));
+        }
+    }
+
+    /**
+     * After a seek the line on screen may be the same as the last one shown before it.
+     * The repeated lines fix below would blank it, so it forgets that last line.
+     */
+    @Override
+    public void onPositionDiscontinuity(int reason) {
+        if (reason == Player.DISCONTINUITY_REASON_SEEK || reason == Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT) {
+            subsBuffer = null;
         }
     }
 

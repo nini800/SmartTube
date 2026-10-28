@@ -98,8 +98,6 @@ public class ExoPlayerInitializer {
      * @return load control
      */
     private DefaultLoadControl createLoadControl() {
-        DefaultLoadControl.Builder baseBuilder = new DefaultLoadControl.Builder();
-
         // Default values
         //DefaultLoadControl.DEFAULT_MIN_BUFFER_MS // 15_000
         //DefaultLoadControl.DEFAULT_MAX_BUFFER_MS // 50_000
@@ -111,6 +109,10 @@ public class ExoPlayerInitializer {
         int maxBufferMs = 30_000;
         int bufferForPlaybackMs = 2_500;
         int bufferForPlaybackAfterRebufferMs = 5_000;
+        int targetBufferBytes = C.LENGTH_UNSET;
+        // PinouTube: keep what was played for every buffer type (upstream: High/Highest only, 50 s),
+        // sized to the bitrate, so seeking back doesn't need a new request to YouTube
+        int backBufferMs = BackBufferLoadControl.MAX_BACK_BUFFER_MS;
 
         switch (mPlayerData.getVideoBufferType()) {
             case PlayerData.BUFFER_HIGHEST:
@@ -118,14 +120,11 @@ public class ExoPlayerInitializer {
                 maxBufferMs = 100_000;
                 // Infinite buffer works awfully on live streams. Constant stuttering.
                 //maxBufferMs = 36_000_000; // technical infinity, recommended here a very high number, the max will be based on setTargetBufferBytes() value
-                baseBuilder
-                        .setTargetBufferBytes(mMaxBufferBytes);
-                baseBuilder.setBackBuffer(minBufferMs, true);
+                targetBufferBytes = mMaxBufferBytes;
                 break;
             case PlayerData.BUFFER_HIGH:
                 minBufferMs = 50_000;
                 maxBufferMs = 50_000;
-                baseBuilder.setBackBuffer(minBufferMs, true);
                 break;
             case PlayerData.BUFFER_MEDIUM:
                 //minBufferMs = 30_000;
@@ -136,16 +135,12 @@ public class ExoPlayerInitializer {
                 maxBufferMs = 5_000; // LIVE fix
                 //bufferForPlaybackMs = 1_000;
                 //bufferForPlaybackAfterRebufferMs = 1_000;
+                backBufferMs = 0;
                 break;
         }
 
-        baseBuilder
-                .setBufferDurationsMs(minBufferMs, maxBufferMs, bufferForPlaybackMs, bufferForPlaybackAfterRebufferMs);
-
-        // Decrease buffer size?
-        //baseBuilder.setAllocator(new DefaultAllocator(true, 16 * 1024));
-
-        return baseBuilder.createDefaultLoadControl();
+        return new BackBufferLoadControl(minBufferMs, maxBufferMs, bufferForPlaybackMs, bufferForPlaybackAfterRebufferMs,
+                targetBufferBytes, backBufferMs);
     }
 
     private void setupVolumeBoost(SimpleExoPlayer player) {

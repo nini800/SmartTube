@@ -518,6 +518,9 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
             if (mPlayer.getTextComponent() != null) {
                 mPlayer.getTextComponent().addTextOutput(mSubtitleManager);
             }
+
+            // seeks reset the repeated lines filter
+            mPlayer.addListener(mSubtitleManager);
         }
     }
 

@@ -97,7 +97,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
   private final Handler eventHandler;
   private final Timeline.Window window;
   private final Timeline.Period period;
-  private final long backBufferDurationUs;
   private final boolean retainBackBufferFromKeyframe;
   private final DefaultMediaClock mediaClock;
   private final PlaybackInfoUpdate playbackInfoUpdate;
@@ -123,6 +122,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
   private long rendererPositionUs;
   private int nextPendingMessageIndex;
 
+  // PinouTube: read on every use, so the load control can size the back buffer to the video bitrate
+  private long getBackBufferDurationUs() {
+    return loadControl.getBackBufferDurationUs();
+  }
+
   public ExoPlayerImplInternal(
       Renderer[] renderers,
       TrackSelector trackSelector,
@@ -146,7 +150,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
     this.clock = clock;
     this.queue = new MediaPeriodQueue();
 
-    backBufferDurationUs = loadControl.getBackBufferDurationUs();
     retainBackBufferFromKeyframe = loadControl.retainBackBufferFromKeyframe();
 
     seekParameters = SeekParameters.DEFAULT;
@@ -563,7 +566,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
     updatePlaybackPositions();
     long rendererPositionElapsedRealtimeUs = SystemClock.elapsedRealtime() * 1000;
 
-    playingPeriodHolder.mediaPeriod.discardBuffer(playbackInfo.positionUs - backBufferDurationUs,
+    playingPeriodHolder.mediaPeriod.discardBuffer(playbackInfo.positionUs - getBackBufferDurationUs(),
         retainBackBufferFromKeyframe);
 
     boolean renderersEnded = true;
@@ -751,7 +754,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
       if (newPlayingPeriodHolder.hasEnabledTracks) {
         periodPositionUs = newPlayingPeriodHolder.mediaPeriod.seekToUs(periodPositionUs);
         newPlayingPeriodHolder.mediaPeriod.discardBuffer(
-            periodPositionUs - backBufferDurationUs, retainBackBufferFromKeyframe);
+            periodPositionUs - getBackBufferDurationUs(), retainBackBufferFromKeyframe);
       }
       resetRendererPosition(periodPositionUs);
       maybeContinueLoading();
