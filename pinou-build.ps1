@@ -1,4 +1,5 @@
 # Builds the household fork (stpinou flavor) and keeps exactly one APK in .\dist.
+# Release build: debug builds log every network response in full, which slows browsing down a lot.
 # Usage: .\pinou-build.ps1 [-Install]   (-Install also pushes it to the Shield)
 param([switch]$Install)
 
@@ -11,13 +12,13 @@ $shield = '192.168.68.52:5555'
 
 Push-Location $root
 try {
-    & "$root\gradlew.bat" :smarttubetv:assembleStpinouDebug --console=plain
+    & "$root\gradlew.bat" :smarttubetv:assembleStpinouRelease --console=plain
     if ($LASTEXITCODE -ne 0) { throw "Gradle build failed ($LASTEXITCODE)" }
 } finally {
     Pop-Location
 }
 
-$apk = Get-ChildItem "$root\smarttubetv\build\outputs\apk\stpinou\debug" -Filter '*_armeabi-v7a.apk' | Select-Object -First 1
+$apk = Get-ChildItem "$root\smarttubetv\build\outputs\apk\stpinou\release" -Filter '*_armeabi-v7a.apk' | Select-Object -First 1
 if (-not $apk) { throw 'armeabi-v7a APK not found' }
 
 $dist = Join-Path $root 'dist'

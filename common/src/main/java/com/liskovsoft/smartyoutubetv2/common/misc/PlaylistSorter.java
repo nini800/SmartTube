@@ -36,7 +36,7 @@ public class PlaylistSorter {
     /**
      * Safety limit: 200 pages is about 20 000 videos.
      */
-    private static final int MAX_PAGES = 200;
+    public static final int MAX_PAGES = 200;
     private static final long UNKNOWN = Long.MIN_VALUE;
     private static final Pattern AGE_PATTERN = Pattern.compile(
             "(\\d+)\\s*(seconds?|secondes?|minutes?|hours?|heures?|days?|jours?|weeks?|semaines?|months?|mois|years?|années?|ans?)(?![a-z])");

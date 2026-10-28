@@ -246,6 +246,13 @@ public class VideoGridFragment extends GridFragment implements VideoSection {
         return false;
     }
 
+    /**
+     * The next page is requested when the selection gets this close to the last item.
+     */
+    protected int getScrollContinueNum() {
+        return isShorts() ? ViewUtil.GRID_SCROLL_CONTINUE_NUM * 2 : ViewUtil.GRID_SCROLL_CONTINUE_NUM;
+    }
+
     private MainUIData getMainUIData() {
         return MainUIData.instance(getContext());
     }
@@ -291,7 +298,7 @@ public class VideoGridFragment extends GridFragment implements VideoSection {
             int size = mGridAdapter.size();
             int index = mGridAdapter.indexOf(item);
 
-            if (index > (size - (isShorts() ? ViewUtil.GRID_SCROLL_CONTINUE_NUM * 2 : ViewUtil.GRID_SCROLL_CONTINUE_NUM))) {
+            if (index > (size - getScrollContinueNum())) {
                 mMainPresenter.onScrollEnd((Video) mGridAdapter.get(size - 1));
             }
         }

@@ -244,7 +244,13 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
         mAllLoaded = false;
 
         if (isSortable() && !getSort().isDefault()) {
-            updateSorted(item);
+            updateSorted(obtainFirstPage(item), item.getTitle());
+            return;
+        }
+
+        // Playlists from the Playlists section: loaded like MediaServiceManager.chooseChannelPresenter does
+        if (isPlaylistChannel(item)) {
+            update(obtainFirstPage(item));
             return;
         }
 
@@ -281,6 +287,17 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
         if (getView() == null) { // starting from outside (e.g. MediaServiceManager)
             mPendingGroup = mediaGroup; // start loading from this group
             return;
+        }
+
+        // First page from outside (MediaServiceManager): a sorted playlist needs every page first
+        if (mBaseGroup == null && isSortable() && !getSort().isDefault()) {
+            getView().updateSortHeader();
+            updateSorted(Observable.just(mediaGroup), mChannel.getTitle());
+            return;
+        }
+
+        if (mBaseGroup == null) {
+            getView().updateSortHeader();
         }
 
         mBaseGroup = mBaseGroup != null ? VideoGroup.from(mBaseGroup, mediaGroup) : VideoGroup.from(mediaGroup);
@@ -362,7 +379,7 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
      * The opened item is a playlist (not a channel): its sort can be changed.
      */
     public boolean isSortable() {
-        return mPendingGroup == null && getSortKey() != null;
+        return getSortKey() != null;
     }
 
     public PlaylistSorter.Sort getSort() {
@@ -384,11 +401,12 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
         disposeActions();
         getView().clear();
         mBaseGroup = null;
+        mPendingGroup = null;
         update(mChannel);
     }
 
     private String getSortKey() {
-        if (mChannel == null || mChannel.isChannel()) {
+        if (mChannel == null) {
             return null;
         }
 
@@ -396,23 +414,110 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
             return mChannel.playlistId;
         }
 
+        // Playlists section: the playlist comes as a "channel" whose id is VL + playlist id
+        if (isPlaylistChannel(mChannel)) {
+            return mChannel.channelId.substring(2);
+        }
+
+        if (mChannel.isChannel()) {
+            return null;
+        }
+
         boolean isPlaylist = mChannel.mediaItem != null && mChannel.mediaItem.getType() == MediaItem.TYPE_PLAYLIST;
 
         return isPlaylist && !TextUtils.isEmpty(mChannel.getTitle()) ? "title:" + mChannel.getTitle() : null;
     }
 
+    private static boolean isPlaylistChannel(Video item) {
+        return item != null && TextUtils.isEmpty(item.playlistId) && item.channelId != null
+                && item.channelId.startsWith("VL") && item.channelId.length() > 2;
+    }
+
+    /**
+     * First page of the opened item. A Playlists section playlist loads through the channel api, like
+     * {@link MediaServiceManager#chooseChannelPresenter}, because that's the call known to work for it.
+     */
+    private Observable<MediaGroup> obtainFirstPage(Video item) {
+        if (!isPlaylistChannel(item)) {
+            return obtainUploadsObservable(item);
+        }
+
+        disposeActions();
+
+        Observable<List<MediaGroup>> rows = item.mediaItem != null ?
+                getContentService().getChannelObserve(item.mediaItem) : getContentService().getChannelObserve(item.channelId);
+
+        return rows
+                .filter(groups -> groups != null && !groups.isEmpty())
+                .map(groups -> groups.get(0));
+    }
+
+    /**
+     * Loads every remaining page after the last shown item, then runs onLoaded (the view scrolls to the end).
+     */
+    public void loadToEnd(Video lastItem, Runnable onLoaded) {
+        VideoGroup start = lastItem != null ? lastItem.getGroup() : null;
+
+        if (mAllLoaded || start == null || start.getMediaGroup() == null || getView() == null) {
+            onLoaded.run();
+            return;
+        }
+
+        disposeActions();
+        getView().showProgressBar(true);
+
+        VideoGroup[] last = {start};
+
+        mScrollAction = RxHelper.<MediaGroup>create(emitter -> {
+                    MediaGroup page = start.getMediaGroup();
+
+                    for (int i = 0; i < PlaylistSorter.MAX_PAGES && page != null && !emitter.isDisposed(); i++) {
+                        page = getContentService().continueGroup(page);
+
+                        if (page == null || page.isEmpty()) {
+                            break;
+                        }
+
+                        emitter.onNext(page);
+                    }
+
+                    emitter.onComplete();
+                })
+                .subscribe(
+                        page -> {
+                            if (getView() == null) {
+                                return;
+                            }
+                            last[0] = VideoGroup.from(last[0], page);
+                            getView().update(last[0]);
+                            mBrowseProcessor.process(last[0]);
+                        },
+                        error -> {
+                            Log.e(TAG, "loadToEnd error: %s", error.getMessage());
+                            if (getView() != null) {
+                                getView().showProgressBar(false);
+                                onLoaded.run();
+                            }
+                        },
+                        () -> {
+                            mAllLoaded = true;
+                            if (getView() != null) {
+                                getView().showProgressBar(false);
+                                onLoaded.run();
+                            }
+                        }
+                );
+    }
+
     /**
      * YouTube can't sort playlists on TV: load every page, then show them sorted.
      */
-    private void updateSorted(Video item) {
-        Observable<MediaGroup> firstPage = obtainUploadsObservable(item);
-
+    private void updateSorted(Observable<MediaGroup> firstPage, String title) {
         if (firstPage == null || getView() == null) {
             return;
         }
 
         PlaylistSorter.Sort sort = getSort();
-        String title = item.getTitle();
 
         disposeActions();
         getView().showProgressBar(true);
@@ -450,6 +555,8 @@ public class ChannelUploadsPresenter extends BasePresenter<ChannelUploadsView> i
         }
 
         getView().updateSortHeader();
+        mBaseGroup = null; // the view is cleared below
+        mAllLoaded = false;
 
         if (mPendingGroup != null) {
             getView().clear();

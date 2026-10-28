@@ -63,6 +63,12 @@
                         android:minWidth="@dimen/tabs_row_height"
                         android:gravity="center" />
 
+                <TextView
+                        android:id="@+id/playlist_scroll_to_end"
+                        style="@style/PlaylistHeaderButton"
+                        android:layout_marginStart="@dimen/tab_item_spacing"
+                        android:text="@string/playlist_scroll_to_end" />
+
             </LinearLayout>
 
             <FrameLayout

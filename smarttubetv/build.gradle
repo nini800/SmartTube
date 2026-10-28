@@ -171,6 +171,8 @@ android {
         stpinou {
             applicationId "home.pinou.smarttube"
             targetSdkVersion project.properties.compileSdkVersion
+            // Release builds without keystore.properties: same key as the debug builds, so they update in place
+            signingConfig signingConfigs.debug
             matchingFallbacks = ['ststable']
         }
         stfdroid {

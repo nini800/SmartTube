@@ -1,5 +1,6 @@
 package com.liskovsoft.smartyoutubetv2.tv.ui.channeluploads;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -10,7 +11,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.leanback.widget.BrowseFrameLayout;
+import androidx.leanback.widget.ObjectAdapter;
 import androidx.leanback.widget.VerticalGridView;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.ChannelUploadsPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.interfaces.VideoGroupPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.ChannelUploadsView;
@@ -85,6 +88,7 @@ public class ChannelUploadsFragment extends VideoGridFragment implements Channel
 
         removeTopPadding();
         setupHeader(view);
+        tuneGrid();
     }
 
     @Override
@@ -116,6 +120,7 @@ public class ChannelUploadsFragment extends VideoGridFragment implements Channel
             PlaylistSorter.Sort sort = mChannelUploadsPresenter.getSort();
             mChannelUploadsPresenter.setSort(new PlaylistSorter.Sort(sort.type, !sort.descending));
         });
+        root.findViewById(R.id.playlist_scroll_to_end).setOnClickListener(v -> scrollToEnd());
 
         // Up from the first grid row goes to the header, down from the header goes to the grid
         ((BrowseFrameLayout) root.findViewById(R.id.grid_frame)).setOnFocusSearchListener((focused, direction) -> {
@@ -181,6 +186,57 @@ public class ChannelUploadsFragment extends VideoGridFragment implements Channel
         mSortTypeView.setText(getString(getSortName(sort.type)) + "  ▾");
         mSortOrderView.setText(sort.descending ? "↓" : "↑");
         mSortOrderView.setContentDescription(getString(sort.descending ? R.string.playlist_sort_descending : R.string.playlist_sort_ascending));
+    }
+
+    /**
+     * Loads the rest of the playlist, then selects its last video.
+     */
+    private void scrollToEnd() {
+        ObjectAdapter adapter = getAdapter();
+
+        if (adapter == null || adapter.size() == 0) {
+            return;
+        }
+
+        mChannelUploadsPresenter.loadToEnd((Video) adapter.get(adapter.size() - 1), () -> {
+            VerticalGridView grid = getBrowseGrid();
+            ObjectAdapter current = getAdapter();
+
+            if (grid == null || current == null || current.size() == 0 || mHeader == null) {
+                return;
+            }
+
+            // Let the grid lay out the appended pages first
+            grid.post(() -> {
+                setSelectedPosition(current.size() - 1);
+                grid.requestFocus();
+            });
+        });
+    }
+
+    /**
+     * Faster playlist scrolling: prepare the next line of cards before it's reached, and keep more cards ready.
+     */
+    @SuppressLint("RestrictedApi")
+    private void tuneGrid() {
+        VerticalGridView grid = getBrowseGrid();
+
+        if (grid == null) {
+            return;
+        }
+
+        grid.setItemViewCacheSize(getColsNum() * 4);
+        grid.setExtraLayoutSpace(getResources().getDisplayMetrics().heightPixels / 2);
+
+        if (grid.getLayoutManager() != null) {
+            grid.getLayoutManager().setItemPrefetchEnabled(true);
+        }
+    }
+
+    @Override
+    protected int getScrollContinueNum() {
+        // Ask YouTube for the next page about five lines before the end, not two
+        return getColsNum() * 5;
     }
 
     private void showSortMenu() {

@@ -117,6 +117,7 @@
     <string name="playlist_sort_views">Views</string>
     <string name="playlist_sort_ascending">Ascending</string>
     <string name="playlist_sort_descending">Descending</string>
+    <string name="playlist_scroll_to_end">Scroll to end</string>
     <string name="not_recommend_channel">Don\'t recommend channel</string>
     <string name="you_wont_see_this_video">Video has been removed from recommended</string>
     <string name="you_wont_see_this_channel">You won\'t see this channel in recommendations</string>
