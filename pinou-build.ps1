@@ -1,7 +1,8 @@
 # Builds the household fork (stpinou flavor) and keeps exactly one APK in .\dist.
 # Release build: debug builds log every network response in full, which slows browsing down a lot.
-# Usage: .\pinou-build.ps1 [-Install]   (-Install also pushes it to the Shield)
-param([switch]$Install)
+# Usage: .\pinou-build.ps1 [-Install] [-NoDaemon]   (-Install also pushes it to the Shield;
+#        -NoDaemon leaves no Gradle process running afterwards, for the nightly pinou-sync.ps1)
+param([switch]$Install, [switch]$NoDaemon)
 
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
@@ -12,7 +13,9 @@ $shield = '192.168.68.52:5555'
 
 Push-Location $root
 try {
-    & "$root\gradlew.bat" :smarttubetv:assembleStpinouRelease --console=plain
+    $gradleArgs = @(':smarttubetv:assembleStpinouRelease', '--console=plain')
+    if ($NoDaemon) { $gradleArgs += '--no-daemon' }
+    & "$root\gradlew.bat" @gradleArgs
     if ($LASTEXITCODE -ne 0) { throw "Gradle build failed ($LASTEXITCODE)" }
 } finally {
     Pop-Location
