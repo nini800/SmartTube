@@ -22,8 +22,8 @@ APK and installs it on the Shield. An agent only steps in when that fails.
    to tracked files.
 2. `git fetch upstream` (3 tries). If `upstream/master` has new commits: `git merge`, then
    `git submodule update --init --recursive`. On a conflict it aborts the merge and fails.
-3. Builds with `pinou-build.ps1 -NoDaemon` when HEAD differs from the last build. If the build fails
-   after a merge, it puts the branch back where it was (the installed app stays as it is) and fails.
+3. Builds with `pinou-build.ps1 -NoDaemon` when something other than these scripts and docs changed
+   since the last build. If the build fails after a merge, it puts the branch back where it was (the installed app stays as it is) and fails.
 4. Pushes the branch to `origin` after a merge. A failed push is only a warning.
 5. Installs `dist\PinouTube.apk` when the Shield's copy differs, only while PinouTube isn't the app on
    screen (or the Shield is asleep or dreaming). It checks every 5 minutes for up to 4 hours (not at all

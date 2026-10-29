@@ -40,16 +40,21 @@ class SyncPostponed : System.Exception {
     SyncPostponed([string]$message) : base($message) {}
 }
 
+# Appends to the log without keeping it open, so it can be read while a build writes to it
+function Add-LogText([string]$Text) {
+    [System.IO.File]::AppendAllText($logFile, $Text + "`r`n")
+}
+
 function Write-Log([string]$Message) {
     $line = '{0} {1}' -f (Get-Date -Format 'HH:mm:ss'), $Message
-    Add-Content -Path $logFile -Value $line -Encoding UTF8
+    Add-LogText $line
     Write-Host $line
 }
 
 # Runs a native command, appends its output to the log, returns the exit code
 function Invoke-Logged([string]$Exe, [string[]]$Arguments) {
     Write-Log ('> {0} {1}' -f (Split-Path $Exe -Leaf), ($Arguments -join ' '))
-    & $Exe @Arguments 2>&1 | ForEach-Object { "$_" } | Add-Content -Path $logFile -Encoding UTF8
+    & $Exe @Arguments 2>&1 | ForEach-Object { Add-LogText "$_" }
     return $LASTEXITCODE
 }
 
@@ -138,7 +143,7 @@ function Install-WhenFree {
             # Checked right before installing: installing closes PinouTube
             if ($state -eq 'free' -and (Get-ShieldState) -eq 'free') {
                 $out = Invoke-Adb @('-s', $shield, 'install', '-r', $apk)
-                Add-Content -Path $logFile -Value $out -Encoding UTF8
+                Add-LogText $out
                 if ($out -notmatch 'Success') {
                     throw [SyncFailure]::new("adb install failed: $(($out -split "`n" | Select-Object -Last 1))")
                 }
@@ -214,7 +219,14 @@ function Invoke-Sync {
         }
 
         $head = Invoke-Git @('rev-parse', 'HEAD')
-        if ($merged -or -not (Test-Path $apk) -or $script:status.builtCommit -ne $head) {
+        $needsBuild = $merged -or -not (Test-Path $apk) -or -not $script:status.builtCommit
+        if (-not $needsBuild -and $script:status.builtCommit -ne $head) {
+            # Changes to these scripts and the docs don't change the app
+            & git -C $root diff --quiet $script:status.builtCommit $head -- . ':(exclude)pinou-*.ps1' ':(exclude)pinou-*.vbs' ':(exclude)*.md' 2>$null
+            $needsBuild = $LASTEXITCODE -ne 0
+            if (-not $needsBuild) { $script:status.builtCommit = $head }
+        }
+        if ($needsBuild) {
             Set-Step 'build'
             $code = Invoke-Logged 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $root 'pinou-build.ps1'), '-NoDaemon')
             if ($code -ne 0) {
@@ -265,6 +277,7 @@ function Invoke-Sync {
         Write-Log $_.ScriptStackTrace
     }
 
+    Invoke-Adb @('kill-server') | Out-Null   # only the private server on $adbPort
     $script:status.finishedAt = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
     Save-Status
     Write-Log "Result: $($script:status.state): $($script:status.summary)"
