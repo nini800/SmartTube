@@ -4,7 +4,6 @@ import android.content.Context;
 
 import com.bumptech.glide.GlideBuilder;
 import com.bumptech.glide.annotation.GlideModule;
-import com.bumptech.glide.load.engine.cache.InternalCacheDiskCacheFactory;
 import com.bumptech.glide.module.AppGlideModule;
 
 /**
@@ -13,14 +12,15 @@ import com.bumptech.glide.module.AppGlideModule;
  */
 @GlideModule
 public class GlideCachingModule extends AppGlideModule {
-    private final static long CACHE_SIZE = 10 * 1024 * 1024; // 10 MB
+    private final static long CACHE_SIZE = 200 * 1024 * 1024; // 200 MB
+    private final static long CACHE_MAX_AGE_MS = 14L * 24 * 60 * 60 * 1000; // two weeks
 
     @Override
     public void applyOptions(Context context, GlideBuilder builder) {
         //if (MyApplication.from(context).isTest())
         //    return; // NOTE: StatFs will crash on robolectric.
 
-        // Limit cache size
-        builder.setDiskCache(new InternalCacheDiskCacheFactory(context, CACHE_SIZE));
+        // Limit cache size and age
+        builder.setDiskCache(new ExpiringDiskCacheFactory(context, CACHE_SIZE, CACHE_MAX_AGE_MS));
     }
 }

@@ -178,6 +178,16 @@ public class ViewUtil {
                 .skipMemoryCache(true); // ensure start animation from beginning
     }
 
+    /**
+     * For still images (thumbnails, avatars): memory and disk cache, so they show at once when they come back on screen.<br/>
+     * Disk cache size and expiry: {@link GlideCachingModule}
+     */
+    public static RequestOptions glideCachedOptions() {
+        return new RequestOptions()
+                // Cache makes app crashing on old android versions
+                .diskCacheStrategy(VERSION.SDK_INT > 21 ? DiskCacheStrategy.ALL : DiskCacheStrategy.NONE);
+    }
+
     public static void enableTransparentDialog(Context context, View rootView) {
         if (context == null || rootView == null || VERSION.SDK_INT <= 19) {
             return;

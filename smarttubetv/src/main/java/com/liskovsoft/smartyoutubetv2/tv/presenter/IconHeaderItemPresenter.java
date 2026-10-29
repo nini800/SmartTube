@@ -68,7 +68,7 @@ public class IconHeaderItemPresenter extends RowHeaderPresenter {
             if (mIconUrl != null) {
                 Glide.with(rootView.getContext())
                         .load(mIconUrl)
-                        .apply(ViewUtil.glideOptions().error(mDefaultIcon))
+                        .apply(ViewUtil.glideCachedOptions().error(mDefaultIcon))
                         .listener(mErrorListener)
                         .into(iconView);
 
