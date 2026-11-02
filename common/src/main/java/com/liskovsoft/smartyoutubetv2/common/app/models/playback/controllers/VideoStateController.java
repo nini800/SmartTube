@@ -11,6 +11,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerU
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.service.VideoStateService.State;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
+import com.liskovsoft.smartyoutubetv2.common.prefs.ChannelSubtitleData;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.ScreensaverManager;
 import com.liskovsoft.smartyoutubetv2.common.prefs.GeneralData;
@@ -467,6 +468,14 @@ public class VideoStateController extends BasePlayerController {
 
     private void restoreSubtitleFormat() {
         if (getPlayer() == null) {
+            return;
+        }
+
+        // Subtitle settings remembered for this channel
+        Video video = getPlayer().getVideo();
+        FormatItem channelFormat = ChannelSubtitleData.instance(getContext()).apply(video != null ? video.channelId : null, getPlayerData());
+        if (channelFormat != null) {
+            getPlayer().setFormat(channelFormat);
             return;
         }
 
