@@ -66,5 +66,12 @@ Rules:
 - **Subtitles after seeking** (`SubtitleManager`): the repeated-line filter resets on every seek.
 - **Thumbnail cache** (`GlideCachingModule`, `ExpiringDiskCacheFactory`, `ViewUtil.glideCachedOptions`,
   card presenters): 200 MB on disk, entries expire after two weeks, plus the memory cache.
+- **Subtitles per channel** (`ChannelSubtitleData`; hooks in `VideoStateController.restoreSubtitleFormat`
+  and `PlayerUIController`: after the subtitles button toggles, and when the subtitles dialog closes):
+  on/off, language, style, size and position remembered per channel.
+- **Mic toggles subtitles** (`smarttubetv/src/stpinou/`: `PinouStartup` provider in the flavor manifest,
+  `MicButton`, `com.tananaev:adblib` as `stpinouImplementation`): while the player is on screen, a shell on
+  the Shield's own ADB port reads the mic and blanks Google Assistant. Its shell and owner file
+  (`/data/local/tmp/pinouplex_mic`) are shared with PinouPlex's `MicButton` on purpose: change both together.
 - **Build scripts**: `pinou-build.ps1` (release build, one APK in `dist`), `pinou-sync.ps1`,
   `pinou-sync-hidden.vbs`, this file.

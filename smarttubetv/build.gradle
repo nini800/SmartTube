@@ -191,6 +191,8 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
+    // PinouTube: shell on the Shield's own ADB port, to read the remote's mic (tv/pinou/MicButton)
+    stpinouImplementation 'com.tananaev:adblib:1.3'
     implementation 'androidx.leanback:leanback:' + leanbackXVersion
     implementation 'androidx.leanback:leanback-preference:' + leanbackXVersion
     implementation 'androidx.recommendation:recommendation:' + leanbackXVersion

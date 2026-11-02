@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- PinouTube additions started with the app: the remote's mic toggles the subtitles -->
+        <provider
+            android:name="com.liskovsoft.smartyoutubetv2.tv.pinou.PinouStartup"
+            android:authorities="${applicationId}.pinoustartup"
+            android:exported="false" />
+    </application>
+</manifest>

@@ -5,4 +5,8 @@
     <string translatable="false" name="search_authority">home.pinou.smarttube</string>
     <string name="search_label">PinouTube</string>
     <string name="settings_description">PinouTube Videos</string>
+    <!-- Remote mic toggles the subtitles (PinouStartup) -->
+    <string translatable="false" name="pinou_subtitles_on">Subtitles: %s</string>
+    <string translatable="false" name="pinou_subtitles_off">Subtitles off</string>
+    <string translatable="false" name="pinou_no_subtitles">No subtitles for this video</string>
 </resources>
