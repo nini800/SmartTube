@@ -28,6 +28,8 @@ import java.util.List;
 
 public class CommentsPreferenceDialogFragment extends LeanbackPreferenceDialogFragment {
     private static final String SENDER_ID = CommentsPreferenceDialogFragment.class.getSimpleName();
+    // PinouTube: a long comment is one bubble (YouTube allows 10,000 characters), read with DpadScroller
+    private static final int MAX_COMMENT_LINES = 2000;
     private boolean mIsTransparent;
     private CommentsReceiver mCommentsReceiver;
     private CharSequence mDialogTitle;
@@ -96,7 +98,9 @@ public class CommentsPreferenceDialogFragment extends LeanbackPreferenceDialogFr
         adapter.setOnMessageViewClickListener((v, message) -> mCommentsReceiver.onCommentClicked(message.getCommentItem()));
         adapter.setOnMessageViewLongClickListener((v, message) -> mCommentsReceiver.onCommentLongClicked(message.getCommentItem()));
         adapter.setOnMessageViewFocusListener((view1, message) -> mFocusedMessage = message);
+        adapter.setMessageMaxLines(MAX_COMMENT_LINES); // PinouTube
         messagesList.setAdapter(adapter);
+        messagesList.enableDpadScroll(true); // PinouTube: scroll through long comments, smooth scrolling while held
         messagesList.requestFocus(); // hold focus even when there's no messages
         adapter.enableStackFromEnd(true);
         adapter.setLoadingMessage(mCommentsReceiver.getLoadingMessage());
@@ -110,14 +114,8 @@ public class CommentsPreferenceDialogFragment extends LeanbackPreferenceDialogFr
                 }
 
                 for (CommentItem commentItem : commentGroup.getComments()) {
-                    if (ChatItemMessage.shouldSplit(commentItem)) {
-                        List<ChatItemMessage> split = ChatItemMessage.fromSplit(view.getContext(), commentItem);
-                        for (ChatItemMessage splitItem : split) {
-                            appendMessage(adapter, splitItem);
-                        }
-                    } else {
-                        appendMessage(adapter, ChatItemMessage.from(view.getContext(), commentItem));
-                    }
+                    // PinouTube: long comments are no longer split into several bubbles
+                    appendMessage(adapter, ChatItemMessage.from(view.getContext(), commentItem));
                 }
                 if (adapter.getMessagesCount() == 0) { // No comments under the video
                     adapter.setLoadingMessage(mCommentsReceiver.getErrorMessage());
@@ -149,7 +147,11 @@ public class CommentsPreferenceDialogFragment extends LeanbackPreferenceDialogFr
 
             @Override
             public void onSync(CommentItem commentItem) {
-                syncMessage(adapter, ChatItemMessage.from(view.getContext(), commentItem));
+                ChatItemMessage message = ChatItemMessage.from(view.getContext(), commentItem);
+                syncMessage(adapter, message);
+                // PinouTube: a like from the comment menu arrives while the menu has replaced this list,
+                // which is rebuilt from the backup when going back
+                syncBackupMessage(message);
             }
         });
 
@@ -189,6 +191,23 @@ public class CommentsPreferenceDialogFragment extends LeanbackPreferenceDialogFr
         if ((mFocusedMessage == null || Helpers.equals(mFocusedMessage.getId(), message.getId())) && IMessage.checkMessage(message)) {
             mFocusedMessage = message;
             adapter.setFocusedMessage(message);
+        }
+    }
+
+    private void syncBackupMessage(ChatItemMessage message) {
+        if (mBackupMessages == null || message.getId() == null) {
+            return;
+        }
+
+        for (int i = 0; i < mBackupMessages.size(); i++) {
+            ChatItemMessage backupMessage = mBackupMessages.get(i);
+            if (Helpers.equals(backupMessage.getId(), message.getId())) {
+                mBackupMessages.set(i, message);
+                if (mFocusedMessage == backupMessage) {
+                    mFocusedMessage = message; // the list restores the focus by reference
+                }
+                break;
+            }
         }
     }
 

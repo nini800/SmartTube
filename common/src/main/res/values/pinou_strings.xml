@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PinouTube's own strings, kept out of strings.xml so the official updates merge without conflicts -->
+<resources>
+    <!-- Menu shown when holding OK on a comment (misc/CommentActions) -->
+    <string name="comment_unlike">Unlike</string>
+    <string name="comment_reply">Reply</string>
+    <string name="comment_show_profile">Show profile</string>
+    <string name="comment_reply_to">Reply to %s</string>
+    <string name="comment_reply_hint">Add a reply…</string>
+    <string name="comment_reply_posting">Posting your reply…</string>
+    <string name="comment_reply_posted">Reply posted</string>
+    <string name="comment_reply_failed">Couldn\'t post the reply (%s)</string>
+    <string name="comment_profile_failed">Couldn\'t open this profile</string>
+</resources>

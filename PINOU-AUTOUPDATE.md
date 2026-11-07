@@ -73,5 +73,11 @@ Rules:
   `MicButton`, `com.tananaev:adblib` as `stpinouImplementation`): while the player is on screen, a shell on
   the Shield's own ADB port reads the mic and blanks Google Assistant. Its shell and owner file
   (`/data/local/tmp/pinouplex_mic`) are shared with PinouPlex's `MicButton` on purpose: change both together.
+- **Comments** (`CommentActions` and `res/values/pinou_strings.xml` in `common`; `CommentsController.showCommentMenu`;
+  `CommentsPreferenceDialogFragment`; chatkit's `DpadScroller` with hooks in `MessagesList` and
+  `MessagesListAdapter.setMessageMaxLines`): holding OK on a comment offers Like/Unlike, Reply and Show profile;
+  a long comment is one bubble; up/down scroll through a comment taller than the screen and scroll smoothly
+  while held. Reply and Show profile call InnerTube directly (`comment/create_comment_reply`, `navigation/resolve_url`)
+  through MediaServiceCore's signed-in client `RetrofitOkHttpHelper.getClient()`: if an update renames it, use its replacement.
 - **Build scripts**: `pinou-build.ps1` (release build, one APK in `dist`), `pinou-sync.ps1`,
   `pinou-sync-hidden.vbs`, this file.

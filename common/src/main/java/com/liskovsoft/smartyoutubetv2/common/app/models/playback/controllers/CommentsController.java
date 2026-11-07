@@ -17,6 +17,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.CommentsRece
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.AbstractCommentsReceiver;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.UiOptionItem;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
+import com.liskovsoft.smartyoutubetv2.common.misc.CommentActions;
 import io.reactivex.disposables.Disposable;
 
 public class CommentsController extends BasePlayerController {
@@ -25,6 +26,7 @@ public class CommentsController extends BasePlayerController {
     private String mLiveChatKey;
     private String mCommentsKey;
     private String mTitle;
+    private String mVideoId; // PinouTube
     private Pair<String, Backup> mBackup;
 
     public CommentsController() {
@@ -41,6 +43,7 @@ public class CommentsController extends BasePlayerController {
         mLiveChatKey = metadata != null && metadata.getLiveChatKey() != null ? metadata.getLiveChatKey() : null;
         mCommentsKey = metadata != null && metadata.getCommentsKey() != null ? metadata.getCommentsKey() : null;
         mTitle = metadata != null ? metadata.getTitle() : null;
+        mVideoId = metadata != null ? metadata.getVideoId() : null;
         if (mBackup != null && !Helpers.equals(mBackup.first, mCommentsKey)) {
             mBackup = null;
         }
@@ -62,6 +65,8 @@ public class CommentsController extends BasePlayerController {
         }
 
         String title = getPlayer() != null && getPlayer().getVideo() != null ? getPlayer().getVideo().getTitleFull() : mTitle;
+        // PinouTube: the video these comments belong to, for replies
+        String videoId = getPlayer() != null && getPlayer().getVideo() != null ? getPlayer().getVideo().videoId : mVideoId;
 
         CommentsReceiver commentsReceiver = new AbstractCommentsReceiver(getContext()) {
             @Override
@@ -102,7 +107,7 @@ public class CommentsController extends BasePlayerController {
 
                     @Override
                     public void onCommentLongClicked(CommentItem commentItem) {
-                        toggleLike(this, commentItem);
+                        showCommentMenu(this, commentItem, videoId);
                     }
                 };
 
@@ -111,7 +116,7 @@ public class CommentsController extends BasePlayerController {
 
             @Override
             public void onCommentLongClicked(CommentItem commentItem) {
-                toggleLike(this, commentItem);
+                showCommentMenu(this, commentItem, videoId);
             }
 
             @Override
@@ -173,6 +178,18 @@ public class CommentsController extends BasePlayerController {
         appDialogPresenter.appendCommentsCategory(title, UiOptionItem.from(title, receiver));
         //appDialogPresenter.enableTransparent(true);
         appDialogPresenter.showDialog();
+    }
+
+    /**
+     * PinouTube: holding OK on a comment offers Like/Unlike, Reply and Show profile (instead of only liking it)
+     */
+    private void showCommentMenu(CommentsReceiver receiver, CommentItem commentItem, String videoId) {
+        if (commentItem == null) {
+            return;
+        }
+
+        CommentActions.showMenu(getContext(), getAppDialogPresenter(), commentItem, videoId,
+                getSignInService().isSigned(), () -> toggleLike(receiver, commentItem));
     }
 
     private void toggleLike(CommentsReceiver receiver, CommentItem commentItem) {

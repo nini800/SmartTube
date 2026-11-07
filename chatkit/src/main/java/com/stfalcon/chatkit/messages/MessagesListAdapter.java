@@ -80,6 +80,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
     private SparseArray<OnMessageViewClickListener> viewClickListenersArray = new SparseArray<>();
     private boolean isDateHeaderEnabled;
     private MESSAGE focusedMessage;
+    private int messageMaxLines; // MOD: PinouTube
 
     /**
      * For default list item layout and view holder.
@@ -108,7 +109,17 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return holders.getHolder(parent, viewType, messagesListStyle);
+        ViewHolder holder = holders.getHolder(parent, viewType, messagesListStyle);
+
+        // MOD: PinouTube: the layout caps a message at 50 lines
+        if (messageMaxLines > 0) {
+            TextView text = holder.itemView.findViewById(R.id.messageText);
+            if (text != null) {
+                text.setMaxLines(messageMaxLines);
+            }
+        }
+
+        return holder;
     }
 
     @SuppressWarnings("unchecked")
@@ -358,6 +369,13 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
 
     public void setFocusedMessage(MESSAGE message) {
         this.focusedMessage = message;
+    }
+
+    /**
+     * MOD: PinouTube: show messages up to this many lines (call before the list shows anything).
+     */
+    public void setMessageMaxLines(int maxLines) {
+        this.messageMaxLines = maxLines;
     }
 
     /**

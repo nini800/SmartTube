@@ -18,6 +18,7 @@ package com.stfalcon.chatkit.messages;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -32,6 +33,7 @@ import com.stfalcon.chatkit.commons.models.IMessage;
  */
 public class MessagesList extends RecyclerView {
     private MessagesListStyle messagesListStyle;
+    private DpadScroller dpadScroller; // MOD: PinouTube
 
     public MessagesList(Context context) {
         super(context);
@@ -79,8 +81,8 @@ public class MessagesList extends RecyclerView {
         SimpleItemAnimator itemAnimator = new DefaultItemAnimator();
         itemAnimator.setSupportsChangeAnimations(false);
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(),
-                LinearLayoutManager.VERTICAL, reverseLayout);
+        // MOD: PinouTube: a layout manager that DpadScroller can stop from scrolling on focus changes
+        LinearLayoutManager layoutManager = new DpadScroller.LayoutManager(getContext(), reverseLayout);
 
         // The solution for aligning items to the top instead of bottom
         // https://stackoverflow.com/questions/46168245/recyclerview-reverse-order
@@ -98,5 +100,44 @@ public class MessagesList extends RecyclerView {
     @SuppressWarnings("ResourceType")
     private void parseStyle(Context context, AttributeSet attrs) {
         messagesListStyle = MessagesListStyle.parse(context, attrs);
+    }
+
+    /**
+     * MOD: PinouTube: D-pad up/down scroll through messages taller than the list,
+     * and scroll smoothly while held (see {@link DpadScroller}).
+     */
+    public void enableDpadScroll(boolean enable) {
+        if (!enable && dpadScroller != null) {
+            dpadScroller.cancel();
+        }
+
+        dpadScroller = enable ? (dpadScroller != null ? dpadScroller : new DpadScroller(this)) : null;
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (dpadScroller != null && dpadScroller.onKeyEvent(event)) {
+            return true;
+        }
+
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        super.onWindowFocusChanged(hasWindowFocus);
+
+        if (!hasWindowFocus && dpadScroller != null) {
+            dpadScroller.cancel(); // e.g. a dialog or the keyboard opened
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (dpadScroller != null) {
+            dpadScroller.cancel();
+        }
+
+        super.onDetachedFromWindow();
     }
 }
